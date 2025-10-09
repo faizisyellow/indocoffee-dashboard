@@ -19,10 +19,6 @@ import { dataStore, type Product } from "../lib/store";
 import { useNavigate, useParams } from "react-router";
 
 const productSchema = yup.object({
-  bean: yup.string().required("Bean is required"),
-  roasted: yup.string().required("Roasted is required"),
-  form: yup.string().required("Form is required"),
-  size: yup.string().required("Size is required"),
   price: yup
     .number()
     .required("Price is required")
