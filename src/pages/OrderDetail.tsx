@@ -7,6 +7,7 @@ export function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -31,9 +32,9 @@ export function OrderDetail() {
     }
   };
 
-  if (!order) {
-    return <Typography>Loading...</Typography>;
-  }
+  if (!order) return <Typography>Loading...</Typography>;
+
+  const displayedItems = showAll ? order.items : order.items.slice(0, 2);
 
   return (
     <Paper
@@ -44,53 +45,91 @@ export function OrderDetail() {
         overflow: "hidden",
       }}
     >
-      <Box sx={{ p: 4, bgcolor: "white" }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 4 }}>
+      <Box sx={{ p: 3, bgcolor: "white" }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
           Order #{order.orderId}
         </Typography>
 
         <Box
           sx={{
-            border: "1px solid #ccc",
-            borderRadius: 1,
-            p: 4,
-            minHeight: 500,
+            border: "1px solid #ddd",
+            borderRadius: 1.5,
+            p: 3,
+            minHeight: 480,
             position: "relative",
           }}
         >
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-              {order.status}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Steps {order.currentStep} of {order.totalSteps}
-            </Typography>
+          {/* Header Row: Status + Next button */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                {order.status}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Steps {order.currentStep} of {order.totalSteps}
+              </Typography>
+            </Box>
+
+            <Button
+              variant="contained"
+              onClick={handleNext}
+              disabled={order.currentStep >= order.totalSteps}
+              sx={{
+                bgcolor: "#4A90E2",
+                "&:hover": { bgcolor: "#357ABD" },
+                textTransform: "none",
+                px: 5,
+                py: 1.25,
+                fontSize: "0.875rem",
+              }}
+            >
+              Next
+            </Button>
           </Box>
 
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              {order.items.map((item, index) => (
-                <Box key={index} sx={{ mb: 3 }}>
+          {/* Main Grid */}
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              maxWidth: "1000px",
+              margin: "0 auto",
+              transition: "max-width 0.3s ease",
+            }}
+          >
+            {/* LEFT: Items */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              {displayedItems.map((item, index) => (
+                <Box key={index} sx={{ mb: 2 }}>
                   <Box
                     sx={{
                       display: "flex",
-                      gap: 3,
-                      p: 3,
-                      bgcolor: "#f5f5f5",
+                      gap: 2,
+                      p: 2,
+                      bgcolor: "#fafafa",
                       borderRadius: 1,
+                      alignItems: "center",
                     }}
                   >
+                    {/* Product Image */}
                     <Box
                       sx={{
-                        width: 120,
-                        height: 120,
+                        width: 80,
+                        height: 80,
                         bgcolor: "white",
                         border: "1px solid #ccc",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        flexShrink: 0,
                         borderRadius: 1,
+                        flexShrink: 0,
                       }}
                     >
                       {item.productImage ? (
@@ -101,110 +140,118 @@ export function OrderDetail() {
                             width: "100%",
                             height: "100%",
                             objectFit: "cover",
+                            borderRadius: "6px",
                           }}
                         />
                       ) : (
-                        <Box
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            bgcolor: "#333",
-                            color: "white",
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 600 }}
-                          >
-                            INDOCOFFE
-                          </Typography>
-                        </Box>
+                        <Typography variant="caption" fontWeight={600}>
+                          INDOCOFFEE
+                        </Typography>
                       )}
                     </Box>
 
+                    {/* Info */}
                     <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 700, mb: 0.5 }}
+                      >
                         {item.productName}
                       </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ mb: 0.5, color: "text.secondary" }}
+                      >
                         ${item.price}
                       </Typography>
                       <Typography
                         variant="body2"
+                        color="text.secondary"
                         sx={{
+                          mb: 0.5,
                           whiteSpace: "pre-line",
-                          color: "text.secondary",
-                          mb: 2,
                         }}
                       >
                         {item.productDetails}
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {item.quantity}x
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Qty: {item.quantity}
                       </Typography>
                     </Box>
                   </Box>
-                  {index < order.items.length - 1 && <Divider sx={{ my: 3 }} />}
+                  {index < displayedItems.length - 1 && (
+                    <Divider sx={{ my: 2 }} />
+                  )}
                 </Box>
               ))}
+
+              {order.items.length > 2 && (
+                <Box sx={{ textAlign: "center", mt: 1 }}>
+                  <Button
+                    variant="text"
+                    onClick={() => setShowAll(!showAll)}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 600,
+                      color: "#4A90E2",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {showAll
+                      ? "Show less"
+                      : `Show more (${order.items.length - 2} more)`}
+                  </Button>
+                </Box>
+              )}
             </Grid>
 
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Box sx={{ bgcolor: "#f5f5f5", p: 3, borderRadius: 1 }}>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Email
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {order.customerEmail}
-                  </Typography>
-                </Box>
+            {/* RIGHT: Summary */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Box
+                sx={{
+                  bgcolor: "#f9f9f9",
+                  p: 2.5,
+                  borderRadius: 1,
+                  fontSize: "0.875rem",
+                }}
+              >
+                {[
+                  ["Email", order.customerEmail],
+                  ["Name", order.customerName],
+                  ["Address", order.customerAddress],
+                  ["Order at", order.createdAt],
+                ].map(([label, value], i) => (
+                  <Box key={i} sx={{ mb: 1.5 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, mb: 0.25 }}
+                    >
+                      {label}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={label === "Address" ? { whiteSpace: "pre-line" } : {}}
+                    >
+                      {value}
+                    </Typography>
+                  </Box>
+                ))}
 
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Name
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {order.customerName}
-                  </Typography>
-                </Box>
+                <Divider sx={{ my: 2 }} />
 
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Address
-                  </Typography>
+                <Box>
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ whiteSpace: "pre-line" }}
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, mb: 1 }}
                   >
-                    {order.customerAddress}
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ my: 3 }} />
-
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Order at
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {order.createdAt}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                     Total
                   </Typography>
                   <Box
                     sx={{
                       display: "flex",
                       justifyContent: "space-between",
-                      mb: 1,
+                      mb: 0.5,
                     }}
                   >
                     <Typography variant="body2" color="text.secondary">
@@ -216,7 +263,7 @@ export function OrderDetail() {
                     sx={{
                       display: "flex",
                       justifyContent: "space-between",
-                      mb: 2,
+                      mb: 1,
                     }}
                   >
                     <Typography variant="body2" color="text.secondary">
@@ -224,17 +271,17 @@ export function OrderDetail() {
                     </Typography>
                     <Typography variant="body2">${order.shipping}</Typography>
                   </Box>
-                  <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: 1 }} />
                   <Box
                     sx={{
                       display: "flex",
                       justifyContent: "space-between",
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>
                       Total
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>
                       ${order.total}
                     </Typography>
                   </Box>
@@ -242,29 +289,6 @@ export function OrderDetail() {
               </Box>
             </Grid>
           </Grid>
-
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 16,
-              right: 16,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={order.currentStep >= order.totalSteps}
-              sx={{
-                bgcolor: "#4A90E2",
-                "&:hover": { bgcolor: "#357ABD" },
-                textTransform: "none",
-                px: 6,
-                py: 1.5,
-              }}
-            >
-              Next
-            </Button>
-          </Box>
         </Box>
       </Box>
     </Paper>
