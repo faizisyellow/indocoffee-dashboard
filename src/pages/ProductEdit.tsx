@@ -8,6 +8,9 @@ import {
   Button,
   Grid,
   IconButton,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { X } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
@@ -155,12 +158,18 @@ export function ProductEdit() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Bean
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter bean type"
-                      />
+                      <FormControl fullWidth>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="Arabica">Arabica</MenuItem>
+                          <MenuItem value="Robusta">Robusta</MenuItem>
+                          <MenuItem value="Liberica">Liberica</MenuItem>
+                          <MenuItem value="Excelsa">Excelsa</MenuItem>
+                        </Select>
+                      </FormControl>
                     </Box>
                   )}
                 </form.Field>
@@ -173,12 +182,18 @@ export function ProductEdit() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Roasted
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter roast level"
-                      />
+                      <FormControl fullWidth>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="Light">Light</MenuItem>
+                          <MenuItem value="Medium">Medium</MenuItem>
+                          <MenuItem value="Medium-Dark">Medium-Dark</MenuItem>
+                          <MenuItem value="Dark">Dark</MenuItem>
+                        </Select>
+                      </FormControl>
                     </Box>
                   )}
                 </form.Field>
@@ -191,12 +206,16 @@ export function ProductEdit() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Form
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter form"
-                      />
+                      <FormControl fullWidth>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="1">Whole Bean</MenuItem>
+                          <MenuItem value="2">Ground</MenuItem>
+                        </Select>
+                      </FormControl>
                     </Box>
                   )}
                 </form.Field>

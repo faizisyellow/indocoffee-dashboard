@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Box, Typography, Paper, TextField, Button, Grid } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  Button,
+  Grid,
+  Select,
+  MenuItem,
+  FormControl,
+} from "@mui/material";
 import { useForm } from "@tanstack/react-form";
 import * as yup from "yup";
 import { dataStore } from "../lib/store";
@@ -125,13 +135,21 @@ export function ProductCreate() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Bean
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter bean type"
-                        error={!!errors.bean}
-                      />
+                      <FormControl fullWidth error={!!errors.bean}>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            Enter bean type
+                          </MenuItem>
+                          <MenuItem value="Arabica">Arabica</MenuItem>
+                          <MenuItem value="Robusta">Robusta</MenuItem>
+                          <MenuItem value="Liberica">Liberica</MenuItem>
+                          <MenuItem value="Excelsa">Excelsa</MenuItem>
+                        </Select>
+                      </FormControl>
                       {errors.bean && (
                         <Typography
                           variant="caption"
@@ -153,13 +171,21 @@ export function ProductCreate() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Roasted
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter roast level"
-                        error={!!errors.roasted}
-                      />
+                      <FormControl fullWidth error={!!errors.roasted}>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            Enter roast level
+                          </MenuItem>
+                          <MenuItem value="Light">Light</MenuItem>
+                          <MenuItem value="Medium">Medium</MenuItem>
+                          <MenuItem value="Medium-Dark">Medium-Dark</MenuItem>
+                          <MenuItem value="Dark">Dark</MenuItem>
+                        </Select>
+                      </FormControl>
                       {errors.roasted && (
                         <Typography
                           variant="caption"
@@ -181,13 +207,19 @@ export function ProductCreate() {
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Form
                       </Typography>
-                      <TextField
-                        fullWidth
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Enter form"
-                        error={!!errors.form}
-                      />
+                      <FormControl fullWidth error={!!errors.form}>
+                        <Select
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            Enter form
+                          </MenuItem>
+                          <MenuItem value="1">Whole Bean</MenuItem>
+                          <MenuItem value="2">Ground</MenuItem>
+                        </Select>
+                      </FormControl>
                       {errors.form && (
                         <Typography
                           variant="caption"
