@@ -94,7 +94,7 @@ export function Layout() {
               variant="h6"
               sx={{ fontWeight: 700, letterSpacing: "0.5px" }}
             >
-              INDOCOFFE
+              INDOCOFFEE
             </Typography>
           )}
           <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
