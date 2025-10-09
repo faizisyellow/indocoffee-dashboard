@@ -8,16 +8,28 @@ import {
   Typography,
   Avatar,
   IconButton,
+  Collapse,
 } from "@mui/material";
-import { Settings, LogOut } from "lucide-react";
+import {
+  Settings,
+  LogOut,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { authService } from "../lib/auth";
 import { useNavigate, useLocation, Outlet } from "react-router";
+import { useState } from "react";
 
 const drawerWidth = 240;
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
+    inventory: true,
+  });
 
   const handleLogout = () => {
     authService.logout();
@@ -26,18 +38,29 @@ export function Layout() {
 
   const menuItems = [
     { label: "Dashboard", path: "/" },
-    { label: "Inventory", path: "/inventory", isParent: true },
-    { label: "Products", path: "/inventory/products", indent: true },
-    { label: "Forms", path: "/inventory/forms", indent: true },
-    { label: "Beans", path: "/inventory/beans", indent: true },
+    {
+      label: "Inventory",
+      path: "/inventory",
+      isParent: true,
+      children: [
+        { label: "Products", path: "/inventory/products" },
+        { label: "Forms", path: "/inventory/forms" },
+        { label: "Beans", path: "/inventory/beans" },
+      ],
+    },
     { label: "Orders", path: "/orders" },
   ];
 
   const isActive = (path: string): boolean => {
-    if (path === "/") {
-      return location.pathname === "/";
-    }
+    if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
+  };
+
+  const handleToggleMenu = (menuPath: string) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [menuPath]: !prev[menuPath],
+    }));
   };
 
   return (
@@ -45,56 +68,128 @@ export function Layout() {
       <Drawer
         variant="permanent"
         sx={{
-          width: drawerWidth,
+          width: sidebarOpen ? drawerWidth : 70,
           flexShrink: 0,
+          transition: "width 0.3s",
           "& .MuiDrawer-paper": {
-            width: drawerWidth,
+            width: sidebarOpen ? drawerWidth : 70,
+            transition: "width 0.3s",
             boxSizing: "border-box",
             bgcolor: "#fafafa",
             borderRight: "1px solid #e0e0e0",
+            overflowX: "hidden",
           },
         }}
       >
-        <Box sx={{ p: 3 }}>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700, letterSpacing: "0.5px" }}
-          >
-            INDOCOFFE
-          </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: sidebarOpen ? "space-between" : "center",
+            p: 2,
+          }}
+        >
+          {sidebarOpen && (
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, letterSpacing: "0.5px" }}
+            >
+              INDOCOFFE
+            </Typography>
+          )}
+          <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu size={20} />
+          </IconButton>
         </Box>
 
-        <List sx={{ px: 2 }}>
+        <List sx={{ px: 1 }}>
           {menuItems.map((item) => {
-            if (item.isParent) {
+            const active = isActive(item.path);
+
+            const typographySlots = {
+              primary: {
+                sx: {
+                  fontWeight: active ? 700 : 400,
+                  color: "text.primary",
+                  fontSize: "0.95rem",
+                  transition: "font-weight 0.2s",
+                },
+              },
+            };
+
+            if (item.isParent && item.children) {
+              const key = item.label.toLowerCase();
+              const open = openMenus[key] ?? false;
+
               return (
-                <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    selected={location.pathname.includes("/inventory")}
-                    sx={{
-                      borderRadius: 2,
-                      bgcolor: location.pathname.includes("/inventory")
-                        ? "#4A90E2"
-                        : "transparent",
-                      color: location.pathname.includes("/inventory")
-                        ? "white"
-                        : "text.primary",
-                      "&:hover": {
-                        bgcolor: location.pathname.includes("/inventory")
-                          ? "#357ABD"
-                          : "rgba(0, 0, 0, 0.04)",
-                      },
-                      "&.Mui-selected": {
-                        bgcolor: "#4A90E2",
-                        "&:hover": {
-                          bgcolor: "#357ABD",
-                        },
-                      },
-                    }}
-                  >
-                    <ListItemText primary={item.label} />
-                  </ListItemButton>
-                </ListItem>
+                <Box key={item.label}>
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleToggleMenu(key)}
+                      sx={{
+                        borderRadius: 2,
+                        justifyContent: sidebarOpen
+                          ? "space-between"
+                          : "center",
+                        px: sidebarOpen ? 2 : 0,
+                        "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                      }}
+                    >
+                      {sidebarOpen && (
+                        <>
+                          <ListItemText
+                            primary={item.label}
+                            slotProps={typographySlots}
+                          />
+                          {open ? (
+                            <ChevronDown size={18} />
+                          ) : (
+                            <ChevronRight size={18} />
+                          )}
+                        </>
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+
+                  {sidebarOpen && (
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {item.children.map((child) => {
+                          const childActive = isActive(child.path);
+                          return (
+                            <ListItem key={child.label} disablePadding>
+                              <ListItemButton
+                                onClick={() => navigate(child.path)}
+                                sx={{
+                                  pl: sidebarOpen ? 4 : 0,
+                                  justifyContent: sidebarOpen
+                                    ? "flex-start"
+                                    : "center",
+                                  "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                                }}
+                              >
+                                {sidebarOpen && (
+                                  <ListItemText
+                                    primary={child.label}
+                                    slotProps={{
+                                      primary: {
+                                        sx: {
+                                          fontWeight: childActive ? 700 : 400,
+                                          color: "text.primary",
+                                          fontSize: "0.9rem",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+                              </ListItemButton>
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </Collapse>
+                  )}
+                </Box>
               );
             }
 
@@ -102,26 +197,19 @@ export function Layout() {
               <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
                   onClick={() => navigate(item.path)}
-                  selected={isActive(item.path)}
                   sx={{
                     borderRadius: 2,
-                    pl: item.indent ? 4 : 2,
-                    bgcolor: isActive(item.path) ? "#4A90E2" : "transparent",
-                    color: isActive(item.path) ? "white" : "text.primary",
-                    "&:hover": {
-                      bgcolor: isActive(item.path)
-                        ? "#357ABD"
-                        : "rgba(0, 0, 0, 0.04)",
-                    },
-                    "&.Mui-selected": {
-                      bgcolor: "#4A90E2",
-                      "&:hover": {
-                        bgcolor: "#357ABD",
-                      },
-                    },
+                    justifyContent: sidebarOpen ? "flex-start" : "center",
+                    px: sidebarOpen ? 2 : 0,
+                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
                   }}
                 >
-                  <ListItemText primary={item.label} />
+                  {sidebarOpen && (
+                    <ListItemText
+                      primary={item.label}
+                      slotProps={typographySlots}
+                    />
+                  )}
                 </ListItemButton>
               </ListItem>
             );
@@ -129,10 +217,17 @@ export function Layout() {
         </List>
       </Drawer>
 
+      {/* Main Content */}
       <Box
         component="main"
-        sx={{ flexGrow: 1, minHeight: "100vh", bgcolor: "#e8e8e8" }}
+        sx={{
+          flexGrow: 1,
+          minHeight: "100vh",
+          bgcolor: "#e8e8e8",
+          transition: "margin-left 0.3s",
+        }}
       >
+        {/* Top bar */}
         <Box
           sx={{
             display: "flex",
