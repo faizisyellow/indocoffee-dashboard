@@ -355,10 +355,9 @@ export function ProductCreate() {
                 sx={{
                   bgcolor: "#4A90E2",
                   "&:hover": { bgcolor: "#357ABD" },
-                  px: 6,
-                  py: 1.5,
                   textTransform: "none",
-                  fontSize: "1rem",
+                  px: 4,
+                  borderRadius: 1,
                 }}
               >
                 Add

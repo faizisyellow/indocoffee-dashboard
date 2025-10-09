@@ -433,7 +433,7 @@ export function ProductsList() {
                 "&:hover": { bgcolor: "#357ABD" },
                 textTransform: "none",
                 px: 4,
-                borderRadius: 2,
+                borderRadius: 1,
               }}
             >
               Add product
