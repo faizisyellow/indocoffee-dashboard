@@ -14,15 +14,19 @@ export type User = {
   createdAt: string;
 };
 
-export interface Bean {
+export type Bean = {
   id: string;
   name: string;
-}
+};
 
-export interface Form {
+export type Beans = Bean[];
+
+export type Form = {
   id: string;
   name: string;
-}
+};
+
+export type Forms = Form[];
 
 export interface Product {
   id: string;

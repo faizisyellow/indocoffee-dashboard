@@ -2,7 +2,6 @@ import axios, { AxiosError } from "axios";
 
 const clientWithAuth = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 1000,
 });
 
 clientWithAuth.interceptors.request.use((config) => {
