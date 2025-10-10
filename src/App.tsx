@@ -13,37 +13,42 @@ import { OrdersList } from "./pages/OrderList";
 import { OrderDetail } from "./pages/OrderDetail";
 import { Navigate } from "react-router";
 import theme from "./theme/theme";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
+  const queryClient = new QueryClient();
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="inventory">
-              <Route path="beans" element={<Beans />} />
-              <Route path="forms" element={<Forms />} />
-              <Route path="products" element={<ProductsList />} />
-              <Route path="products/create" element={<ProductCreate />} />
-              <Route path="products/edit/:id" element={<ProductEdit />} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="inventory">
+                <Route path="beans" element={<Beans />} />
+                <Route path="forms" element={<Forms />} />
+                <Route path="products" element={<ProductsList />} />
+                <Route path="products/create" element={<ProductCreate />} />
+                <Route path="products/edit/:id" element={<ProductEdit />} />
+              </Route>
+              <Route path="orders" element={<OrdersList />} />
+              <Route path="orders/:id" element={<OrderDetail />} />
             </Route>
-            <Route path="orders" element={<OrdersList />} />
-            <Route path="orders/:id" element={<OrderDetail />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

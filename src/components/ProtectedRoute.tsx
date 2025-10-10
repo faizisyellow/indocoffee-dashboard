@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import { authService } from "../lib/auth";
+import { authService } from "../lib/service/auth";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;

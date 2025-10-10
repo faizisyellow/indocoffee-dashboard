@@ -9,17 +9,16 @@ import {
   Avatar,
   IconButton,
   Collapse,
+  Tooltip,
 } from "@mui/material";
-import {
-  Settings,
-  LogOut,
-  Menu,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
-import { authService } from "../lib/auth";
+import { LogOut, Menu, ChevronDown, ChevronRight } from "lucide-react";
+
 import { useNavigate, useLocation, Outlet } from "react-router";
 import { useState } from "react";
+import { authService } from "../lib/service/auth";
+import { useQuery } from "@tanstack/react-query";
+import { profileService } from "../lib/service/profile";
+import { green } from "@mui/material/colors";
 
 const drawerWidth = 240;
 
@@ -30,6 +29,12 @@ export function Layout() {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     inventory: true,
   });
+  const { isPending, isError, data } = useQuery({
+    queryKey: ["profile"],
+    queryFn: profileService.getProfile.bind(profileService),
+  });
+
+  const username = isPending || isError ? "user" : (data?.username ?? "user");
 
   const handleLogout = () => {
     authService.logout();
@@ -243,13 +248,17 @@ export function Layout() {
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton>
-              <Settings size={20} />
-            </IconButton>
-            <IconButton onClick={handleLogout}>
-              <LogOut size={20} />
-            </IconButton>
-            <Avatar sx={{ width: 40, height: 40, bgcolor: "white" }} />
+            <Tooltip title="Log out">
+              <IconButton onClick={handleLogout}>
+                <LogOut size={20} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title={username}>
+              <Avatar sx={{ width: 40, height: 40, bgcolor: green[900] }}>
+                {username[0].toUpperCase()}
+              </Avatar>
+            </Tooltip>
           </Box>
         </Box>
 
