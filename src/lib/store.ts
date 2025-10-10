@@ -28,7 +28,24 @@ export type Form = {
 
 export type Forms = Form[];
 
-export interface Product {
+export type Product = {
+  id: string;
+  roasted: string;
+  beanId: number;
+  bean: {
+    name: string;
+  };
+  form: {
+    name: string;
+  };
+  price: number;
+  quantity: number;
+  image: string;
+};
+
+export type Products = Product[];
+
+export interface ProductMock {
   id: string;
   bean: string;
   roasted: string;
@@ -74,7 +91,7 @@ class DataStore {
     { id: "2", name: "Ground coffee" },
   ];
 
-  private products: Product[] = [
+  private products: ProductMock[] = [
     {
       id: "1",
       bean: "Robusta",
@@ -177,21 +194,21 @@ class DataStore {
     return false;
   }
 
-  getProducts(): Product[] {
+  getProducts(): ProductMock[] {
     return [...this.products];
   }
 
-  getProduct(id: string): Product | null {
+  getProduct(id: string): ProductMock | null {
     return this.products.find((p) => p.id === id) || null;
   }
 
-  addProduct(product: Omit<Product, "id">): Product {
+  addProduct(product: Omit<ProductMock, "id">): ProductMock {
     const newProduct = { ...product, id: Date.now().toString() };
     this.products.push(newProduct);
     return newProduct;
   }
 
-  updateProduct(id: string, product: Partial<Product>): Product | null {
+  updateProduct(id: string, product: Partial<ProductMock>): ProductMock | null {
     const index = this.products.findIndex((p) => p.id === id);
     if (index !== -1) {
       this.products[index] = { ...this.products[index], ...product };

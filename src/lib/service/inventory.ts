@@ -4,8 +4,9 @@ import type {
   CreateProductResponse,
   GetBeansResponse,
   GetFormsResponse,
+  GetProductsResponse,
 } from "./response/inventory";
-import type { Beans, Forms } from "../store";
+import type { Beans, Forms, Products } from "../store";
 
 class InventoryService {
   axios: AxiosInstance;
@@ -18,6 +19,11 @@ class InventoryService {
       "products",
       newProduct,
     );
+    return result.data?.data;
+  }
+
+  async GetProducts(): Promise<Products> {
+    const result = await this.axios.get<GetProductsResponse>("products");
     return result.data?.data;
   }
 
