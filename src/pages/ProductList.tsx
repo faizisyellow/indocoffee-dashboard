@@ -272,8 +272,10 @@ export function ProductsList() {
                                 key={bean.id}
                                 control={
                                   <Radio
-                                    checked={selectedBean === bean.id}
-                                    onChange={() => handleBeanToggle(bean.id)}
+                                    checked={selectedBean === String(bean.id)}
+                                    onChange={() =>
+                                      handleBeanToggle(String(bean.id))
+                                    }
                                     size="small"
                                   />
                                 }
@@ -291,8 +293,10 @@ export function ProductsList() {
                                 key={form.id}
                                 control={
                                   <Radio
-                                    checked={selectedForm === form.id}
-                                    onChange={() => handleFormToggle(form.id)}
+                                    checked={selectedForm === String(form.id)}
+                                    onChange={() =>
+                                      handleFormToggle(String(form.id))
+                                    }
                                     size="small"
                                   />
                                 }
