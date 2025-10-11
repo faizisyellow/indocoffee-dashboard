@@ -34,7 +34,7 @@ export function ProductsList() {
   const [selectedForm, setSelectedForm] = useState<string>("");
   const [selectedRoasted, setSelectedRoasted] = useState<string>("");
   const [page, setPage] = useState<number>(1);
-  const [limit] = useState<number>(2);
+  const [limit] = useState<number>(8);
 
   const {
     isPending,
@@ -123,7 +123,7 @@ export function ProductsList() {
 
     switch (status) {
       case 400:
-        return "Invalid request. Please check your input and try again.";
+        return "Invalid request. Try again.";
 
       case 500:
         return "Our server is having trouble right now. Please try again later.";
@@ -343,7 +343,7 @@ export function ProductsList() {
               fontWeight: 500,
             }}
           >
-            Sort by Date: {sortBy === "asc" ? "Oldest" : "Newest"}
+            Sort by Quantity: {sortBy === "asc" ? "Oldest" : "Newest"}
           </Button>
         </Box>
 

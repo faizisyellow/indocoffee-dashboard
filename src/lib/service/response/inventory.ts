@@ -1,4 +1,4 @@
-import type { Beans, Forms, Products } from "../../store";
+import type { Beans, Forms, Product, Products } from "../../store";
 
 export type CreateProductResponse = {
   data: string;
@@ -7,6 +7,16 @@ export type CreateProductResponse = {
 
 export type GetProductsResponse = {
   data: Products;
+  error: string;
+};
+
+export type GetProductResponse = {
+  data: Product;
+  error: string;
+};
+
+export type EditProductResponse = {
+  data: string;
   error: string;
 };
 

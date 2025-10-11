@@ -15,6 +15,11 @@ export type User = {
 };
 
 export type Bean = {
+  id: number;
+  name: string;
+};
+
+export type BeanMock = {
   id: string;
   name: string;
 };
@@ -22,6 +27,11 @@ export type Bean = {
 export type Beans = Bean[];
 
 export type Form = {
+  id: number;
+  name: string;
+};
+
+export type FormMock = {
   id: string;
   name: string;
 };
@@ -31,10 +41,11 @@ export type Forms = Form[];
 export type Product = {
   id: string;
   roasted: string;
-  beanId: number;
+  bean_id: number;
   bean: {
     name: string;
   };
+  form_id: number;
   form: {
     name: string;
   };
@@ -81,12 +92,12 @@ export interface Order {
 }
 
 class DataStore {
-  private beans: Bean[] = [
+  private beans: BeanMock[] = [
     { id: "1", name: "Robusta" },
     { id: "2", name: "Arabica" },
   ];
 
-  private forms: Form[] = [
+  private forms: FormMock[] = [
     { id: "1", name: "Whole coffee bean" },
     { id: "2", name: "Ground coffee" },
   ];
@@ -138,17 +149,17 @@ class DataStore {
     },
   ];
 
-  getBeans(): Bean[] {
+  getBeans(): BeanMock[] {
     return [...this.beans];
   }
 
-  addBean(bean: Omit<Bean, "id">): Bean {
+  addBean(bean: Omit<BeanMock, "id">): BeanMock {
     const newBean = { ...bean, id: Date.now().toString() };
     this.beans.push(newBean);
     return newBean;
   }
 
-  updateBean(id: string, bean: Partial<Bean>): Bean | null {
+  updateBean(id: string, bean: Partial<BeanMock>): BeanMock | null {
     const index = this.beans.findIndex((b) => b.id === id);
     if (index !== -1) {
       this.beans[index] = { ...this.beans[index], ...bean };
@@ -166,17 +177,17 @@ class DataStore {
     return false;
   }
 
-  getForms(): Form[] {
+  getForms(): FormMock[] {
     return [...this.forms];
   }
 
-  addForm(form: Omit<Form, "id">): Form {
+  addForm(form: Omit<FormMock, "id">): FormMock {
     const newForm = { ...form, id: Date.now().toString() };
     this.forms.push(newForm);
     return newForm;
   }
 
-  updateForm(id: string, form: Partial<Form>): Form | null {
+  updateForm(id: string, form: Partial<FormMock>): FormMock | null {
     const index = this.forms.findIndex((f) => f.id === id);
     if (index !== -1) {
       this.forms[index] = { ...this.forms[index], ...form };

@@ -2,11 +2,13 @@ import type { AxiosInstance } from "axios";
 import { clientWithAuth } from "./axios/axios";
 import type {
   CreateProductResponse,
+  EditProductResponse,
   GetBeansResponse,
   GetFormsResponse,
+  GetProductResponse,
   GetProductsResponse,
 } from "./response/inventory";
-import type { Beans, Forms, Products } from "../store";
+import type { Beans, Forms, Product, Products } from "../store";
 
 class InventoryService {
   axios: AxiosInstance;
@@ -18,6 +20,9 @@ class InventoryService {
     const result = await this.axios.post<CreateProductResponse>(
       "products",
       newProduct,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
     );
     return result.data?.data;
   }
@@ -42,6 +47,22 @@ class InventoryService {
     const url = queryString ? `products?${queryString}` : "products/";
 
     const result = await this.axios.get<GetProductsResponse>(url);
+    return result.data?.data;
+  }
+
+  async GetProduct(id: number): Promise<Product> {
+    const result = await this.axios.get<GetProductResponse>(`products/${id}`);
+    return result.data?.data;
+  }
+
+  async EditProduct(formData: FormData, productId: number): Promise<string> {
+    const result = await this.axios.patch<EditProductResponse>(
+      `products/${productId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return result.data?.data;
   }
 
