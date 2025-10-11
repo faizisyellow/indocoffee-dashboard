@@ -23,6 +23,8 @@ import { useNavigate } from "react-router";
 import { ArrowUpDown, ChevronDown, Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { inventoryService } from "../lib/service/inventory";
+import type { GetProductsResponse } from "../lib/service/response/inventory";
+import type { AxiosError } from "axios";
 
 export function ProductsList() {
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ export function ProductsList() {
     isPending,
     isError,
     data: productsResponse,
-    error,
+    error: productsError,
   } = useQuery({
     queryKey: [
       "products",
@@ -106,6 +108,33 @@ export function ProductsList() {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  const getErrorMessage = (): string => {
+    const error = productsError as AxiosError<GetProductsResponse>;
+
+    if (!error.response) {
+      if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
+        return "Unable to reach the server. Please check your internet connection and try again.";
+      }
+      return "A network issue occurred. Please try again.";
+    }
+
+    const status = error.response.status;
+
+    switch (status) {
+      case 400:
+        return "Invalid request. Please check your input and try again.";
+
+      case 500:
+        return "Our server is having trouble right now. Please try again later.";
+
+      default:
+        if (status >= 500) {
+          return "Our server is having trouble right now. Please try again later.";
+        }
+        return "An unexpected error occurred. Please try again.";
+    }
+  };
 
   return (
     <Paper elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
@@ -343,9 +372,7 @@ export function ProductsList() {
 
           {isError && (
             <Box sx={{ p: 4 }}>
-              <Alert severity="error">
-                Error loading products: {error?.message || "Unknown error"}
-              </Alert>
+              <Alert severity="error">{getErrorMessage()}</Alert>
             </Box>
           )}
 

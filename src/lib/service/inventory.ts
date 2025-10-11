@@ -39,7 +39,7 @@ class InventoryService {
     if (limit !== undefined) params.append("limit", limit.toString());
 
     const queryString = params.toString();
-    const url = queryString ? `products/?${queryString}` : "products/";
+    const url = queryString ? `products?${queryString}` : "products/";
 
     const result = await this.axios.get<GetProductsResponse>(url);
     return result.data?.data;

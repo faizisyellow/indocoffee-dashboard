@@ -69,8 +69,7 @@ export function ProductCreate() {
 
   const mutation = useMutation({
     mutationFn: inventoryService.createProduct.bind(inventoryService),
-    onSuccess: (data: string) => {
-      console.log(data);
+    onSuccess: () => {
       navigate("/inventory/products");
     },
   });
