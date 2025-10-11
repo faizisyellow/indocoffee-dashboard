@@ -22,8 +22,26 @@ class InventoryService {
     return result.data?.data;
   }
 
-  async GetProducts(): Promise<Products> {
-    const result = await this.axios.get<GetProductsResponse>("products");
+  async GetProducts(
+    bean?: string,
+    form?: string,
+    roasted?: string,
+    sort?: "asc" | "desc",
+    offset?: number,
+    limit?: number,
+  ): Promise<Products> {
+    const params = new URLSearchParams();
+    if (bean) params.append("bean", bean);
+    if (form) params.append("form", form);
+    if (roasted) params.append("roast", roasted);
+    if (sort) params.append("sort", sort);
+    if (offset !== undefined) params.append("offset", offset.toString());
+    if (limit !== undefined) params.append("limit", limit.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? `products/?${queryString}` : "products/";
+
+    const result = await this.axios.get<GetProductsResponse>(url);
     return result.data?.data;
   }
 

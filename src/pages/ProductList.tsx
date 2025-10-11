@@ -15,6 +15,9 @@ import {
   AccordionDetails,
   CircularProgress,
   Alert,
+  Radio,
+  FormControlLabel,
+  capitalize,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import { ArrowUpDown, ChevronDown, Filter } from "lucide-react";
@@ -23,21 +26,85 @@ import { inventoryService } from "../lib/service/inventory";
 
 export function ProductsList() {
   const navigate = useNavigate();
-  const [sortBy, setSortBy] = useState<string>("asc");
+  const [sortBy, setSortBy] = useState<"asc" | "desc">("asc");
   const [filterDrawerOpen, setFilterDrawerOpen] = useState<boolean>(false);
+  const [selectedBean, setSelectedBean] = useState<string>("");
+  const [selectedForm, setSelectedForm] = useState<string>("");
+  const [selectedRoasted, setSelectedRoasted] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(2);
 
   const {
     isPending,
     isError,
-    data: products,
+    data: productsResponse,
     error,
   } = useQuery({
-    queryKey: ["products"],
-    queryFn: inventoryService.GetProducts.bind(inventoryService),
+    queryKey: [
+      "products",
+      selectedBean,
+      selectedForm,
+      selectedRoasted,
+      sortBy,
+      page,
+      limit,
+    ],
+    queryFn: () => {
+      const offset = (page - 1) * limit;
+      return inventoryService.GetProducts(
+        selectedBean,
+        selectedForm,
+        selectedRoasted,
+        sortBy,
+        offset,
+        limit,
+      );
+    },
   });
+
+  const resultGetBeans = useQuery({
+    queryKey: ["beans"],
+    queryFn: inventoryService.GetBeans.bind(inventoryService),
+  });
+
+  const resultGetForms = useQuery({
+    queryKey: ["forms"],
+    queryFn: inventoryService.GetForms.bind(inventoryService),
+  });
+
+  const products = productsResponse || [];
+  const isLastPage = products.length < limit;
 
   function handleSortToggle() {
     setSortBy(sortBy === "asc" ? "desc" : "asc");
+    setPage(1);
+  }
+
+  function handleBeanToggle(beanId: string) {
+    setSelectedBean(selectedBean === beanId ? "" : beanId);
+    setPage(1);
+  }
+
+  function handleFormToggle(formId: string) {
+    setSelectedForm(selectedForm === formId ? "" : formId);
+    setPage(1);
+  }
+
+  function handleRoastedToggle(roasted: string) {
+    setSelectedRoasted(selectedRoasted === roasted ? "" : roasted);
+    setPage(1);
+  }
+
+  function handleClearFilters() {
+    setSelectedBean("");
+    setSelectedForm("");
+    setSelectedRoasted("");
+    setPage(1);
+  }
+
+  function handlePageChange(newPage: number) {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -129,16 +196,29 @@ export function ProductsList() {
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       Filters
                     </Typography>
-                    <Button
-                      onClick={() => setFilterDrawerOpen(false)}
-                      sx={{
-                        minWidth: "auto",
-                        color: "text.secondary",
-                        fontSize: 18,
-                      }}
-                    >
-                      ✕
-                    </Button>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        onClick={handleClearFilters}
+                        size="small"
+                        sx={{
+                          textTransform: "none",
+                          color: "text.secondary",
+                          fontSize: 13,
+                        }}
+                      >
+                        Clear all
+                      </Button>
+                      <Button
+                        onClick={() => setFilterDrawerOpen(false)}
+                        sx={{
+                          minWidth: "auto",
+                          color: "text.secondary",
+                          fontSize: 18,
+                        }}
+                      >
+                        ✕
+                      </Button>
+                    </Box>
                   </Box>
 
                   {["Bean", "Form", "Roasted"].map((title) => (
@@ -154,9 +234,66 @@ export function ProductsList() {
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        <Typography variant="body2" color="text.secondary">
-                          Coming soon...
-                        </Typography>
+                        {title === "Bean" ? (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {resultGetBeans.data?.map((bean) => (
+                              <FormControlLabel
+                                key={bean.id}
+                                control={
+                                  <Radio
+                                    checked={selectedBean === bean.id}
+                                    onChange={() => handleBeanToggle(bean.id)}
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(bean.name)}
+                                sx={{ mb: 0.5 }}
+                              />
+                            ))}
+                          </Box>
+                        ) : title === "Form" ? (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {resultGetForms.data?.map((form) => (
+                              <FormControlLabel
+                                key={form.id}
+                                control={
+                                  <Radio
+                                    checked={selectedForm === form.id}
+                                    onChange={() => handleFormToggle(form.id)}
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(form.name)}
+                                sx={{ mb: 0.5 }}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {["light", "medium", "dark"].map((roasted) => (
+                              <FormControlLabel
+                                key={roasted}
+                                control={
+                                  <Radio
+                                    checked={selectedRoasted === roasted}
+                                    onChange={() =>
+                                      handleRoastedToggle(roasted)
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(roasted)}
+                                sx={{ mb: 0.5 }}
+                              />
+                            ))}
+                          </Box>
+                        )}
                       </AccordionDetails>
                     </Accordion>
                   ))}
@@ -181,7 +318,6 @@ export function ProductsList() {
           </Button>
         </Box>
 
-        {/* Table */}
         <Box
           sx={{
             border: "1px solid",
@@ -231,7 +367,12 @@ export function ProductsList() {
                 <TableBody>
                   {products.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                      <TableCell
+                        colSpan={8}
+                        rowSpan={10}
+                        align="center"
+                        sx={{ py: 8 }}
+                      >
                         <Typography variant="body1" color="text.secondary">
                           No products found
                         </Typography>
@@ -247,7 +388,7 @@ export function ProductsList() {
                           "&:hover": { bgcolor: "action.hover" },
                         }}
                       >
-                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                         <TableCell>
                           <Box
                             sx={{
@@ -281,9 +422,9 @@ export function ProductsList() {
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell>{product.bean?.name}</TableCell>
-                        <TableCell>{product.roasted}</TableCell>
-                        <TableCell>{product.form?.name}</TableCell>
+                        <TableCell>{capitalize(product.bean.name)}</TableCell>
+                        <TableCell>{capitalize(product.roasted)}</TableCell>
+                        <TableCell>{capitalize(product.form.name)}</TableCell>
                         <TableCell>${product.price.toFixed(2)}</TableCell>
                         <TableCell>{product.quantity}</TableCell>
                         <TableCell>
@@ -324,6 +465,54 @@ export function ProductsList() {
             </TableContainer>
           )}
         </Box>
+
+        {!isPending && !isError && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 3,
+              px: 2,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Page {page} • Showing {products.length} items
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page === 1}
+                onClick={() => handlePageChange(page - 1)}
+                sx={{
+                  textTransform: "none",
+                  minWidth: 90,
+                }}
+              >
+                Previous
+              </Button>
+              <Typography
+                variant="body2"
+                sx={{ px: 2, color: "text.secondary" }}
+              >
+                Page {page}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={isLastPage}
+                onClick={() => handlePageChange(page + 1)}
+                sx={{
+                  textTransform: "none",
+                  minWidth: 90,
+                }}
+              >
+                Next
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Paper>
   );
