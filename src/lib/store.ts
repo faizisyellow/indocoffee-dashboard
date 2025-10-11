@@ -66,7 +66,40 @@ export interface ProductMock {
   image?: string;
 }
 
-export interface OrderItem {
+export type OrderStatus =
+  | "confirm"
+  | "roasting"
+  | "shipped"
+  | "cancelled"
+  | "complete";
+
+export type Order = {
+  alternative_phone_number: string;
+  city: string;
+  created_at: string;
+  customer_email: string;
+  customer_name: string;
+  id: string;
+  items: OrderItem[];
+  phone_number: string;
+  status: string;
+  street: string;
+  total_price: number;
+};
+
+export type Orders = Order[];
+
+export type OrderItem = {
+  bean_name: string;
+  form_name: string;
+  id: number;
+  image: string;
+  order_quantity: number;
+  price: number;
+  roasted: string;
+};
+
+export interface OrderItemMock {
   productId: string;
   productName: string;
   productImage?: string;
@@ -75,13 +108,13 @@ export interface OrderItem {
   price: number;
 }
 
-export interface Order {
+export interface OrderMock {
   id: string;
   orderId: string;
   customerEmail: string;
   customerName: string;
   customerAddress: string;
-  items: OrderItem[];
+  items: OrderItemMock[];
   subtotal: number;
   shipping: number;
   total: number;
@@ -114,7 +147,7 @@ class DataStore {
     },
   ];
 
-  private orders: Order[] = [
+  private orders: OrderMock[] = [
     {
       id: "1",
       orderId: "37dadas247asdas",
@@ -237,21 +270,21 @@ class DataStore {
     return false;
   }
 
-  getOrders(): Order[] {
+  getOrders(): OrderMock[] {
     return [...this.orders];
   }
 
-  getOrder(id: string): Order | null {
+  getOrder(id: string): OrderMock | null {
     return this.orders.find((o) => o.id === id) || null;
   }
 
-  addOrder(order: Omit<Order, "id">): Order {
+  addOrder(order: Omit<OrderMock, "id">): OrderMock {
     const newOrder = { ...order, id: Date.now().toString() };
     this.orders.push(newOrder);
     return newOrder;
   }
 
-  updateOrder(id: string, order: Partial<Order>): Order | null {
+  updateOrder(id: string, order: Partial<OrderMock>): OrderMock | null {
     const index = this.orders.findIndex((o) => o.id === id);
     if (index !== -1) {
       this.orders[index] = { ...this.orders[index], ...order };
@@ -260,7 +293,7 @@ class DataStore {
     return null;
   }
 
-  updateOrderStep(id: string, step: number): Order | null {
+  updateOrderStep(id: string, step: number): OrderMock | null {
     const index = this.orders.findIndex((o) => o.id === id);
     if (index !== -1) {
       this.orders[index].currentStep = step;
