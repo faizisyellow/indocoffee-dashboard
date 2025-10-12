@@ -25,6 +25,11 @@ export type CreateBeanResponse = {
   error: string;
 };
 
+export type CreateFormResponse = {
+  data: string;
+  error: string;
+};
+
 export type GetBeansResponse = {
   data: Beans;
   error: string;

@@ -2,6 +2,7 @@ import type { AxiosInstance } from "axios";
 import { clientWithAuth } from "./axios/axios";
 import type {
   CreateBeanResponse,
+  CreateFormResponse,
   CreateProductResponse,
   EditBeanResponse,
   EditFormResponse,
@@ -113,6 +114,18 @@ class InventoryService {
     await this.axios.delete(`beans/${id}`);
   }
 
+  async CreateForm(name: string): Promise<string> {
+    const payload = { name: name };
+    const result = await this.axios.post<CreateFormResponse>(
+      "forms",
+      JSON.stringify(payload),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return result.data?.data;
+  }
+
   async GetForms(): Promise<Forms> {
     const result = await this.axios.get<GetFormsResponse>("forms");
     return result.data?.data;
@@ -126,7 +139,7 @@ class InventoryService {
   async EditForm(id: number, name: string): Promise<string> {
     const result = await this.axios.patch<EditFormResponse>(
       `forms/${id}`,
-      name,
+      JSON.stringify({ name: name }),
       {
         headers: { "Content-Type": "application/json" },
       },
