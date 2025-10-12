@@ -203,8 +203,10 @@ export function OrdersList() {
                   <TableHead>
                     <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                       <TableCell sx={{ fontWeight: 600 }}>No</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Order ID</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Products</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        Customer Email
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Items</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>
                         Total Price
                       </TableCell>
@@ -223,17 +225,51 @@ export function OrdersList() {
                         }}
                       >
                         <TableCell>{(page - 1) * limit + index + 1}</TableCell>
-                        <TableCell>{order.id}</TableCell>
+                        <TableCell>{order.customer_email}</TableCell>
                         <TableCell>{order.items.length}</TableCell>
                         <TableCell>${order.total_price.toFixed(2)}</TableCell>
                         <TableCell>
                           <Chip
                             label={order.status}
-                            variant="outlined"
                             sx={{
                               borderRadius: 1,
-                              fontWeight: 500,
+                              fontWeight: 600,
                               textTransform: "capitalize",
+                              letterSpacing: 0.2,
+                              fontSize: "0.85rem",
+                              px: 1.5,
+                              backgroundColor: () => {
+                                switch (order.status) {
+                                  case "confirm":
+                                    return "rgba(33, 150, 243, 0.1)";
+                                  case "roasting":
+                                    return "rgba(255, 152, 0, 0.1)";
+                                  case "shipped":
+                                    return "rgba(3, 169, 244, 0.1)";
+                                  case "complete":
+                                    return "rgba(76, 175, 80, 0.1)";
+                                  case "cancelled":
+                                    return "rgba(244, 67, 54, 0.1)";
+                                  default:
+                                    return "rgba(158, 158, 158, 0.1)";
+                                }
+                              },
+                              color: (theme) => {
+                                switch (order.status) {
+                                  case "confirm":
+                                    return "#2196f3";
+                                  case "roasting":
+                                    return "#ff9800";
+                                  case "shipped":
+                                    return "#03a9f4";
+                                  case "complete":
+                                    return "#4caf50";
+                                  case "cancelled":
+                                    return "#f44336";
+                                  default:
+                                    return theme.palette.text.secondary;
+                                }
+                              },
                             }}
                           />
                         </TableCell>
