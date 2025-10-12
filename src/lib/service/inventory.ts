@@ -2,13 +2,17 @@ import type { AxiosInstance } from "axios";
 import { clientWithAuth } from "./axios/axios";
 import type {
   CreateProductResponse,
+  EditBeanResponse,
+  EditFormResponse,
   EditProductResponse,
+  GetBeanResponse,
   GetBeansResponse,
+  GetFormResponse,
   GetFormsResponse,
   GetProductResponse,
   GetProductsResponse,
 } from "./response/inventory";
-import type { Beans, Forms, Product, Products } from "../store";
+import type { Bean, Beans, Form, Forms, Product, Products } from "../store";
 
 class InventoryService {
   axios: AxiosInstance;
@@ -75,9 +79,49 @@ class InventoryService {
     return result.data?.data;
   }
 
+  async GetBean(id: number): Promise<Bean> {
+    const result = await this.axios.get<GetBeanResponse>(`beans/${id}`);
+    return result.data?.data;
+  }
+
+  async EditBean(id: number, name: string): Promise<string> {
+    const result = await this.axios.patch<EditBeanResponse>(
+      `beans/${id}`,
+      name,
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return result.data?.data;
+  }
+
+  async DeleteBean(id: number) {
+    await this.axios.delete(`beans/${id}`);
+  }
+
   async GetForms(): Promise<Forms> {
     const result = await this.axios.get<GetFormsResponse>("forms");
     return result.data?.data;
+  }
+
+  async GetForm(id: number): Promise<Form> {
+    const result = await this.axios.get<GetFormResponse>(`forms/${id}`);
+    return result.data?.data;
+  }
+
+  async EditForm(id: number, name: string): Promise<string> {
+    const result = await this.axios.patch<EditFormResponse>(
+      `forms/${id}`,
+      name,
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return result.data?.data;
+  }
+
+  async DeleteForm(id: number) {
+    await this.axios.delete(`forms/${id}`);
   }
 }
 export const inventoryService = new InventoryService(clientWithAuth);
