@@ -41,8 +41,8 @@ export function Beans() {
       .string()
       .trim()
       .required("Bean name is required")
-      .min(2, "Bean name must be at least 2 characters")
-      .max(10, "Bean name must be at most 10 characters"),
+      .min(5, "Bean name must be at least 2 characters")
+      .max(12, "Bean name must be at most 10 characters"),
   });
 
   const editBeanSchema = yup.object({
@@ -50,8 +50,8 @@ export function Beans() {
       .string()
       .trim()
       .required("Bean name is required")
-      .min(2, "Bean name must be at least 2 characters")
-      .max(10, "Bean name must be at most 10 characters"),
+      .min(5, "Bean name must be at least 2 characters")
+      .max(12, "Bean name must be at most 10 characters"),
   });
 
   const {
