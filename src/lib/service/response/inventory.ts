@@ -20,6 +20,11 @@ export type EditProductResponse = {
   error: string;
 };
 
+export type CreateBeanResponse = {
+  data: string;
+  error: string;
+};
+
 export type GetBeansResponse = {
   data: Beans;
   error: string;

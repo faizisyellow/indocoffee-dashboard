@@ -19,11 +19,6 @@ export type Bean = {
   name: string;
 };
 
-export type BeanMock = {
-  id: string;
-  name: string;
-};
-
 export type Beans = Bean[];
 
 export type Form = {
@@ -31,12 +26,16 @@ export type Form = {
   name: string;
 };
 
+export type Forms = Form[];
+
+export type BeanMock = {
+  id: string;
+  name: string;
+};
 export type FormMock = {
   id: string;
   name: string;
 };
-
-export type Forms = Form[];
 
 export type Product = {
   id: number;

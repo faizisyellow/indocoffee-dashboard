@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { clientWithAuth } from "./axios/axios";
 import type {
+  CreateBeanResponse,
   CreateProductResponse,
   EditBeanResponse,
   EditFormResponse,
@@ -74,6 +75,18 @@ class InventoryService {
     return result.data?.data;
   }
 
+  async CreateBean(name: string): Promise<string> {
+    const payload = { name: name };
+    const result = await this.axios.post<CreateBeanResponse>(
+      "beans",
+      JSON.stringify(payload),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return result.data?.data;
+  }
+
   async GetBeans(): Promise<Beans> {
     const result = await this.axios.get<GetBeansResponse>("beans");
     return result.data?.data;
@@ -85,9 +98,10 @@ class InventoryService {
   }
 
   async EditBean(id: number, name: string): Promise<string> {
+    const payload = { name: name };
     const result = await this.axios.patch<EditBeanResponse>(
       `beans/${id}`,
-      name,
+      JSON.stringify(payload),
       {
         headers: { "Content-Type": "application/json" },
       },
