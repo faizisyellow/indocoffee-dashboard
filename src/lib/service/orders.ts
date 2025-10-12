@@ -1,7 +1,11 @@
 import type { AxiosInstance } from "axios";
-import type { Orders, OrderStatus } from "../store";
+import type { Order, Orders, OrderStatus } from "../store";
 import { clientWithAuth } from "./axios/axios";
-import type { GetOrdersResponse } from "./response/orders";
+import type {
+  GetOrderDetailResponse,
+  GetOrdersResponse,
+  UpdateStatusOrderResponse,
+} from "./response/orders";
 
 class OrdersService {
   axios: AxiosInstance;
@@ -26,6 +30,27 @@ class OrdersService {
 
     const response = await this.axios.get<GetOrdersResponse>(url);
 
+    return response.data.data;
+  }
+
+  async GetOrder(id: string): Promise<Order> {
+    const response = await this.axios.get<GetOrderDetailResponse>(
+      `orders/${id}`,
+    );
+    return response.data.data;
+  }
+
+  async UpdateStatusOrder(id: string, status: OrderStatus): Promise<string> {
+    const nextState =
+      status == "roasting"
+        ? "roast"
+        : status == "shipped"
+          ? "ship"
+          : "complete";
+
+    const response = await this.axios.patch<UpdateStatusOrderResponse>(
+      `orders/${id}/${nextState}`,
+    );
     return response.data.data;
   }
 }

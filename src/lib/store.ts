@@ -68,9 +68,9 @@ export interface ProductMock {
 
 export type OrderStatus =
   | "confirm"
+  | "cancelled"
   | "roasting"
   | "shipped"
-  | "cancelled"
   | "complete";
 
 export type Order = {
