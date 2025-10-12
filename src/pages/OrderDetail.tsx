@@ -21,8 +21,32 @@ import { useParams, useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import type { Order, OrderStatus } from "../lib/store";
-import type { GetOrderDetailResponse } from "../lib/service/response/orders";
 import { ordersService } from "../lib/service/orders";
+
+function getErrorMessageFromStatus(error?: AxiosError): string {
+  if (!error) return "An unexpected error occurred.";
+  const status = error.response?.status;
+
+  if (!status) {
+    if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
+      return "Unable to reach the server. Please check your internet connection.";
+    }
+    return "A network issue occurred. Please try again.";
+  }
+
+  switch (status) {
+    case 400:
+      return "Invalid request. Please try again.";
+    case 401:
+    case 403:
+    case 404:
+      return "The requested order was not found or you don't have access.";
+    case 500:
+      return "Server error. Please try again later.";
+    default:
+      return "An unexpected error occurred. Please try again.";
+  }
+}
 
 export function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -41,7 +65,7 @@ export function OrderDetail() {
     isLoading,
     isError,
     error,
-  } = useQuery<Order, AxiosError<GetOrderDetailResponse>>({
+  } = useQuery<Order, AxiosError>({
     queryKey: ["orders", id],
     queryFn: async () => {
       if (!id) throw new Error("Order ID not found");
@@ -51,26 +75,29 @@ export function OrderDetail() {
   });
 
   const resultUpdateOrderStatus = useMutation({
-    mutationFn: (payload: { id: string; status: OrderStatus }) => {
-      return ordersService.UpdateStatusOrder(payload.id, payload.status);
-    },
+    mutationFn: (payload: { id: string; status: OrderStatus }) =>
+      ordersService.UpdateStatusOrder(payload.id, payload.status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", id] });
       setShowSnackbar(true);
       setConfirmDialog({ open: false });
     },
+    onError: () => {
+      (document.activeElement as HTMLElement)?.blur();
+      setConfirmDialog({ open: false });
+    },
   });
-
-  const statusFlow: OrderStatus[] = [
-    "confirm",
-    "roasting",
-    "shipped",
-    "complete",
-  ];
 
   function handleUpdateStatusOrder(currentStatus: OrderStatus) {
     if (!id) return;
     if (currentStatus === "cancelled" || currentStatus === "complete") return;
+
+    const statusFlow: OrderStatus[] = [
+      "confirm",
+      "roasting",
+      "shipped",
+      "complete",
+    ];
 
     const currentIndex = statusFlow.indexOf(currentStatus);
     const nextStatus = statusFlow[currentIndex + 1];
@@ -84,30 +111,6 @@ export function OrderDetail() {
     resultUpdateOrderStatus.mutate({ id, status: confirmDialog.nextStatus });
   }
 
-  const getErrorMessage = (): string => {
-    const err = error;
-    if (!err) return "An unexpected error occurred.";
-    if (!err.response) {
-      if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
-        return "Unable to reach the server. Please check your internet connection and try again.";
-      }
-      return "A network issue occurred. Please try again.";
-    }
-    const status = err.response.status;
-    switch (status) {
-      case 400:
-        return "Invalid request. Try again.";
-      case 401:
-      case 403:
-      case 404:
-        return "The requested order was not found or you don't have access.";
-      case 500:
-        return "Our server is having trouble right now. Please try again later.";
-      default:
-        return "An unexpected error occurred. Please try again.";
-    }
-  };
-
   if (isLoading)
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
@@ -119,7 +122,7 @@ export function OrderDetail() {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          {getErrorMessage()}
+          {getErrorMessageFromStatus(error)}
         </Alert>
         <Button
           variant="contained"
@@ -256,6 +259,12 @@ export function OrderDetail() {
                     : order.status === "cancelled"
                       ? "Cancelled"
                       : (() => {
+                          const statusFlow: OrderStatus[] = [
+                            "confirm",
+                            "roasting",
+                            "shipped",
+                            "complete",
+                          ];
                           const currentIndex = statusFlow.indexOf(
                             order.status as OrderStatus,
                           );
@@ -266,6 +275,22 @@ export function OrderDetail() {
                         })()}
               </Button>
             </Box>
+
+            {resultUpdateOrderStatus.isError && (
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                  borderRadius: 1,
+                  fontSize: "0.875rem",
+                  bgcolor: "rgba(244, 67, 54, 0.05)",
+                }}
+              >
+                {getErrorMessageFromStatus(
+                  resultUpdateOrderStatus.error as AxiosError,
+                )}
+              </Alert>
+            )}
 
             {/* Main Grid */}
             <Grid container spacing={3}>
