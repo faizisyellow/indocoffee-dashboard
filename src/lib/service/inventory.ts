@@ -55,6 +55,10 @@ class InventoryService {
     return result.data?.data;
   }
 
+  async DeleteProduct(id: number) {
+    await this.axios.delete(`products/${id}`);
+  }
+
   async EditProduct(formData: FormData, productId: number): Promise<string> {
     const result = await this.axios.patch<EditProductResponse>(
       `products/${productId}`,

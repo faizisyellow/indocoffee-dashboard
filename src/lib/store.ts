@@ -39,7 +39,7 @@ export type FormMock = {
 export type Forms = Form[];
 
 export type Product = {
-  id: string;
+  id: number;
   roasted: string;
   bean_id: number;
   bean: {

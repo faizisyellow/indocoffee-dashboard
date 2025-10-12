@@ -18,23 +18,34 @@ import {
   Radio,
   FormControlLabel,
   capitalize,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import { ArrowUpDown, ChevronDown, Filter } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "../lib/service/inventory";
 import type { GetProductsResponse } from "../lib/service/response/inventory";
 import type { AxiosError } from "axios";
 
 export function ProductsList() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [sortBy, setSortBy] = useState<"asc" | "desc">("asc");
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState<boolean>(false);
-  const [selectedBean, setSelectedBean] = useState<string>("");
-  const [selectedForm, setSelectedForm] = useState<string>("");
-  const [selectedRoasted, setSelectedRoasted] = useState<string>("");
-  const [page, setPage] = useState<number>(1);
-  const [limit] = useState<number>(8);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedBean, setSelectedBean] = useState("");
+  const [selectedForm, setSelectedForm] = useState("");
+  const [selectedRoasted, setSelectedRoasted] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(8);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(
+    null,
+  );
 
   const {
     isPending,
@@ -74,6 +85,15 @@ export function ProductsList() {
     queryFn: inventoryService.GetForms.bind(inventoryService),
   });
 
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => inventoryService.DeleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setDeleteDialogOpen(false);
+      setSelectedProductId(null);
+    },
+  });
+
   const products = productsResponse || [];
   const isLastPage = products.length < limit;
 
@@ -109,25 +129,25 @@ export function ProductsList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function handleDeleteClick(id: number) {
+    setSelectedProductId(id);
+    setDeleteDialogOpen(true);
+  }
+
   const getErrorMessage = (): string => {
     const error = productsError as AxiosError<GetProductsResponse>;
-
     if (!error.response) {
       if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
         return "Unable to reach the server. Please check your internet connection and try again.";
       }
       return "A network issue occurred. Please try again.";
     }
-
     const status = error.response.status;
-
     switch (status) {
       case 400:
         return "Invalid request. Try again.";
-
       case 500:
         return "Our server is having trouble right now. Please try again later.";
-
       default:
         if (status >= 500) {
           return "Our server is having trouble right now. Please try again later.";
@@ -461,9 +481,7 @@ export function ProductsList() {
                         <TableCell>
                           <Box sx={{ display: "flex", gap: 1 }}>
                             <Button
-                              onClick={() =>
-                                window.confirm("Delete this product?")
-                              }
+                              onClick={() => handleDeleteClick(product.id)}
                               sx={{
                                 color: "error.main",
                                 textTransform: "none",
@@ -496,6 +514,39 @@ export function ProductsList() {
             </TableContainer>
           )}
         </Box>
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+        >
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              color="inherit"
+              disabled={deleteProductMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedProductId &&
+                deleteProductMutation.mutate(selectedProductId)
+              }
+              color="error"
+              variant="contained"
+              disabled={deleteProductMutation.isPending}
+            >
+              {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {!isPending && !isError && (
           <Box
