@@ -10,108 +10,182 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  Checkbox,
-  FormControlLabel,
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  CircularProgress,
+  Alert,
+  Radio,
+  FormControlLabel,
+  capitalize,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
-import { dataStore, type Product } from "../lib/store";
 import { useNavigate } from "react-router";
-import { ChevronDown, Filter } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Filter } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { inventoryService } from "../lib/service/inventory";
+import type { GetProductsResponse } from "../lib/service/response/inventory";
+import type { AxiosError } from "axios";
 
 export function ProductsList() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(dataStore.getProducts());
-  const [selectedBeans, setSelectedBeans] = useState<string[]>([]);
-  const [selectedForms, setSelectedForms] = useState<string[]>([]);
-  const [selectedRoasted, setSelectedRoasted] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>("");
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
-  const handleDelete = (id: string) => {
-    dataStore.deleteProduct(id);
-    setProducts(dataStore.getProducts());
-  };
-
-  const handleEdit = (id: string) => {
-    navigate(`/inventory/products/edit/${id}`);
-  };
-
-  const getFilteredAndSortedProducts = () => {
-    let filtered = [...products];
-    if (selectedBeans.length > 0) {
-      filtered = filtered.filter((p) => selectedBeans.includes(p.bean));
-    }
-    if (selectedForms.length > 0) {
-      filtered = filtered.filter((p) => selectedForms.includes(p.form));
-    }
-    if (selectedRoasted.length > 0) {
-      filtered = filtered.filter((p) => selectedRoasted.includes(p.roasted));
-    }
-
-    if (sortBy === "price-asc") filtered.sort((a, b) => a.price - b.price);
-    else if (sortBy === "price-desc")
-      filtered.sort((a, b) => b.price - a.price);
-    else if (sortBy === "quantity-asc")
-      filtered.sort((a, b) => a.quantity - b.quantity);
-    else if (sortBy === "quantity-desc")
-      filtered.sort((a, b) => b.quantity - a.quantity);
-    else if (sortBy === "bean")
-      filtered.sort((a, b) => a.bean.localeCompare(b.bean));
-
-    return filtered;
-  };
-
-  const displayedProducts = getFilteredAndSortedProducts();
-
-  const uniqueBeans = Array.from(new Set(products.map((p) => p.bean))).filter(
-    Boolean,
+  const [sortBy, setSortBy] = useState<"asc" | "desc">("asc");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedBean, setSelectedBean] = useState("");
+  const [selectedForm, setSelectedForm] = useState("");
+  const [selectedRoasted, setSelectedRoasted] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(8);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(
+    null,
   );
-  const uniqueForms = Array.from(new Set(products.map((p) => p.form))).filter(
-    Boolean,
-  );
-  const uniqueRoasted = Array.from(
-    new Set(products.map((p) => p.roasted)),
-  ).filter(Boolean);
 
-  const handleBeanToggle = (bean: string) => {
-    setSelectedBeans((prev) =>
-      prev.includes(bean) ? prev.filter((b) => b !== bean) : [...prev, bean],
-    );
-  };
+  const {
+    isPending,
+    isError,
+    data: productsResponse,
+    error: productsError,
+  } = useQuery({
+    queryKey: [
+      "products",
+      selectedBean,
+      selectedForm,
+      selectedRoasted,
+      sortBy,
+      page,
+      limit,
+    ],
+    queryFn: () => {
+      const offset = (page - 1) * limit;
+      return inventoryService.GetProducts(
+        selectedBean,
+        selectedForm,
+        selectedRoasted,
+        sortBy,
+        offset,
+        limit,
+      );
+    },
+  });
 
-  const handleFormToggle = (form: string) => {
-    setSelectedForms((prev) =>
-      prev.includes(form) ? prev.filter((f) => f !== form) : [...prev, form],
-    );
-  };
+  const resultGetBeans = useQuery({
+    queryKey: ["beans"],
+    queryFn: inventoryService.GetBeans.bind(inventoryService),
+  });
 
-  const handleRoastedToggle = (roasted: string) => {
-    setSelectedRoasted((prev) =>
-      prev.includes(roasted)
-        ? prev.filter((r) => r !== roasted)
-        : [...prev, roasted],
-    );
+  const resultGetForms = useQuery({
+    queryKey: ["forms"],
+    queryFn: inventoryService.GetForms.bind(inventoryService),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => inventoryService.DeleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setDeleteDialogOpen(false);
+      setSelectedProductId(null);
+    },
+  });
+
+  const products = productsResponse || [];
+  const isLastPage = products.length < limit;
+
+  function handleSortToggle() {
+    setSortBy(sortBy === "asc" ? "desc" : "asc");
+    setPage(1);
+  }
+
+  function handleBeanToggle(beanId: string) {
+    setSelectedBean(selectedBean === beanId ? "" : beanId);
+    setPage(1);
+  }
+
+  function handleFormToggle(formId: string) {
+    setSelectedForm(selectedForm === formId ? "" : formId);
+    setPage(1);
+  }
+
+  function handleRoastedToggle(roasted: string) {
+    setSelectedRoasted(selectedRoasted === roasted ? "" : roasted);
+    setPage(1);
+  }
+
+  function handleClearFilters() {
+    setSelectedBean("");
+    setSelectedForm("");
+    setSelectedRoasted("");
+    setPage(1);
+  }
+
+  function handlePageChange(newPage: number) {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleDeleteClick(id: number) {
+    setSelectedProductId(id);
+    setDeleteDialogOpen(true);
+  }
+
+  const getErrorMessage = (): string => {
+    const error = productsError as AxiosError<GetProductsResponse>;
+    if (!error.response) {
+      if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
+        return "Unable to reach the server. Please check your internet connection and try again.";
+      }
+      return "A network issue occurred. Please try again.";
+    }
+    const status = error.response.status;
+    switch (status) {
+      case 400:
+        return "Invalid request. Try again.";
+      case 500:
+        return "Our server is having trouble right now. Please try again later.";
+      default:
+        if (status >= 500) {
+          return "Our server is having trouble right now. Please try again later.";
+        }
+        return "An unexpected error occurred. Please try again.";
+    }
   };
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        overflow: "hidden",
-      }}
-    >
+    <Paper elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
       <Box sx={{ p: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 4 }}>
-          List all Products
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            List all Products
+          </Typography>
 
-        {/* Filter and Sort Row */}
+          <Button
+            variant="contained"
+            onClick={() => navigate("/inventory/products/create")}
+            sx={{
+              bgcolor: "#4A90E2",
+              "&:hover": { bgcolor: "#357ABD" },
+              textTransform: "none",
+              px: 4,
+              borderRadius: 1,
+            }}
+          >
+            Add product
+          </Button>
+        </Box>
+
         <Box
           sx={{
             display: "flex",
@@ -121,7 +195,6 @@ export function ProductsList() {
             position: "relative",
           }}
         >
-          {/* Filter Button */}
           <Box sx={{ position: "relative" }}>
             <Button
               variant="outlined"
@@ -139,10 +212,10 @@ export function ProductsList() {
                 gap: 1,
               }}
             >
-              <Filter size={18} strokeWidth={1.8} /> Filters
+              <Filter size={18} strokeWidth={1.8} />
+              Filters
             </Button>
 
-            {/* Filter Panel */}
             {filterDrawerOpen && (
               <Paper
                 elevation={6}
@@ -172,162 +245,132 @@ export function ProductsList() {
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       Filters
                     </Typography>
-                    <Button
-                      onClick={() => setFilterDrawerOpen(false)}
-                      sx={{
-                        minWidth: "auto",
-                        color: "text.secondary",
-                        fontSize: 18,
-                      }}
-                    >
-                      ✕
-                    </Button>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        onClick={handleClearFilters}
+                        size="small"
+                        sx={{
+                          textTransform: "none",
+                          color: "text.secondary",
+                          fontSize: 13,
+                        }}
+                      >
+                        Clear all
+                      </Button>
+                      <Button
+                        onClick={() => setFilterDrawerOpen(false)}
+                        sx={{
+                          minWidth: "auto",
+                          color: "text.secondary",
+                          fontSize: 18,
+                        }}
+                      >
+                        ✕
+                      </Button>
+                    </Box>
                   </Box>
 
-                  {/* Bean Filter */}
-                  <Accordion
-                    defaultExpanded
-                    disableGutters
-                    elevation={0}
-                    sx={{
-                      "&:before": { display: "none" },
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ChevronDown size={16} />}>
-                      <Typography sx={{ fontWeight: 600 }}>Bean</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {uniqueBeans.map((bean) => (
-                          <FormControlLabel
-                            key={bean}
-                            control={
-                              <Checkbox
-                                checked={selectedBeans.includes(bean)}
-                                onChange={() => handleBeanToggle(bean)}
-                                size="small"
+                  {["Bean", "Form", "Roasted"].map((title) => (
+                    <Accordion
+                      key={title}
+                      defaultExpanded
+                      disableGutters
+                      elevation={0}
+                    >
+                      <AccordionSummary expandIcon={<ChevronDown size={16} />}>
+                        <Typography sx={{ fontWeight: 600 }}>
+                          {title}
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        {title === "Bean" ? (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {resultGetBeans.data?.map((bean) => (
+                              <FormControlLabel
+                                key={bean.id}
+                                control={
+                                  <Radio
+                                    checked={selectedBean === String(bean.id)}
+                                    onChange={() =>
+                                      handleBeanToggle(String(bean.id))
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(bean.name)}
+                                sx={{ mb: 0.5 }}
                               />
-                            }
-                            label={bean}
-                          />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-
-                  {/* Form Filter */}
-                  <Accordion
-                    defaultExpanded
-                    disableGutters
-                    elevation={0}
-                    sx={{
-                      "&:before": { display: "none" },
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ChevronDown size={16} />}>
-                      <Typography sx={{ fontWeight: 600 }}>Form</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {uniqueForms.map((form) => (
-                          <FormControlLabel
-                            key={form}
-                            control={
-                              <Checkbox
-                                checked={selectedForms.includes(form)}
-                                onChange={() => handleFormToggle(form)}
-                                size="small"
+                            ))}
+                          </Box>
+                        ) : title === "Form" ? (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {resultGetForms.data?.map((form) => (
+                              <FormControlLabel
+                                key={form.id}
+                                control={
+                                  <Radio
+                                    checked={selectedForm === String(form.id)}
+                                    onChange={() =>
+                                      handleFormToggle(String(form.id))
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(form.name)}
+                                sx={{ mb: 0.5 }}
                               />
-                            }
-                            label={form}
-                          />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-
-                  {/* Roasted Filter */}
-                  <Accordion
-                    defaultExpanded
-                    disableGutters
-                    elevation={0}
-                    sx={{
-                      "&:before": { display: "none" },
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ChevronDown size={16} />}>
-                      <Typography sx={{ fontWeight: 600 }}>Roasted</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {uniqueRoasted.map((roasted) => (
-                          <FormControlLabel
-                            key={roasted}
-                            control={
-                              <Checkbox
-                                checked={selectedRoasted.includes(roasted)}
-                                onChange={() => handleRoastedToggle(roasted)}
-                                size="small"
+                            ))}
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{ display: "flex", flexDirection: "column" }}
+                          >
+                            {["light", "medium", "dark"].map((roasted) => (
+                              <FormControlLabel
+                                key={roasted}
+                                control={
+                                  <Radio
+                                    checked={selectedRoasted === roasted}
+                                    onChange={() =>
+                                      handleRoastedToggle(roasted)
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label={capitalize(roasted)}
+                                sx={{ mb: 0.5 }}
                               />
-                            }
-                            label={roasted}
-                          />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
+                            ))}
+                          </Box>
+                        )}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
                 </Box>
               </Paper>
             )}
           </Box>
 
-          {/* Sort Dropdown */}
-          <FormControl sx={{ minWidth: 200 }}>
-            <Select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              displayEmpty
-              size="small"
-              sx={{
-                borderRadius: 2,
-                bgcolor: "background.paper",
-              }}
-            >
-              <MenuItem value="">
-                <em>Sort by</em>
-              </MenuItem>
-              <MenuItem value="price-asc">Price: Low to High</MenuItem>
-              <MenuItem value="price-desc">Price: High to Low</MenuItem>
-              <MenuItem value="quantity-asc">Quantity: Low to High</MenuItem>
-              <MenuItem value="quantity-desc">Quantity: High to Low</MenuItem>
-              <MenuItem value="bean">Bean: A to Z</MenuItem>
-            </Select>
-          </FormControl>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowUpDown size={16} />}
+            onClick={handleSortToggle}
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              px: 2.5,
+              py: 0.5,
+              fontWeight: 500,
+            }}
+          >
+            Sort by Quantity: {sortBy === "asc" ? "Oldest" : "Newest"}
+          </Button>
         </Box>
 
-        {/* Table */}
         <Box
           sx={{
             border: "1px solid",
@@ -338,108 +381,220 @@ export function ProductsList() {
             position: "relative",
           }}
         >
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "grey.50" }}>
-                  <TableCell sx={{ fontWeight: 600 }}>No</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Cover</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Bean</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Roasted</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Form</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Quantity</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {displayedProducts.map((product, index) => (
-                  <TableRow
-                    key={product.id}
-                    hover
-                    sx={{
-                      transition: "background-color 0.2s ease",
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                  >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: 2,
-                          overflow: "hidden",
-                          bgcolor: "grey.100",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.bean}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <Typography variant="caption">IMG</Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{product.bean}</TableCell>
-                    <TableCell>{product.roasted}</TableCell>
-                    <TableCell>{product.form}</TableCell>
-                    <TableCell>${product.price}</TableCell>
-                    <TableCell>{product.quantity}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button
-                          onClick={() => handleDelete(product.id)}
-                          sx={{
-                            color: "text.secondary",
-                            textTransform: "none",
-                          }}
-                        >
-                          Delete
-                        </Button>
-                        <Button
-                          onClick={() => handleEdit(product.id)}
-                          sx={{
-                            color: "text.secondary",
-                            textTransform: "none",
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Box sx={{ position: "absolute", bottom: 16, right: 16 }}>
-            <Button
-              variant="contained"
-              onClick={() => navigate("/inventory/products/create")}
+          {isPending && (
+            <Box
               sx={{
-                bgcolor: "#4A90E2",
-                "&:hover": { bgcolor: "#357ABD" },
-                textTransform: "none",
-                px: 4,
-                borderRadius: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 500,
               }}
             >
-              Add product
-            </Button>
-          </Box>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {isError && (
+            <Box sx={{ p: 4 }}>
+              <Alert severity="error">{getErrorMessage()}</Alert>
+            </Box>
+          )}
+
+          {!isPending && !isError && products && (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "grey.50" }}>
+                    <TableCell sx={{ fontWeight: 600 }}>No</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Cover</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Bean</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Roasted</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Form</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Quantity</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {products.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        rowSpan={10}
+                        align="center"
+                        sx={{ py: 8 }}
+                      >
+                        <Typography variant="body1" color="text.secondary">
+                          No products found
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    products.map((product, index) => (
+                      <TableRow
+                        key={product.id}
+                        hover
+                        sx={{
+                          transition: "background-color 0.2s ease",
+                          "&:hover": { bgcolor: "action.hover" },
+                        }}
+                      >
+                        <TableCell>{(page - 1) * limit + index + 1}</TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: 2,
+                              overflow: "hidden",
+                              bgcolor: "grey.100",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.bean?.name}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                No Image
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{capitalize(product.bean.name)}</TableCell>
+                        <TableCell>{capitalize(product.roasted)}</TableCell>
+                        <TableCell>{capitalize(product.form.name)}</TableCell>
+                        <TableCell>${product.price.toFixed(2)}</TableCell>
+                        <TableCell>{product.quantity}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <Button
+                              onClick={() => handleDeleteClick(product.id)}
+                              sx={{
+                                color: "error.main",
+                                textTransform: "none",
+                                "&:hover": { bgcolor: "error.lighter" },
+                              }}
+                            >
+                              Delete
+                            </Button>
+                            <Button
+                              onClick={() =>
+                                navigate(
+                                  `/inventory/products/edit/${product.id}`,
+                                )
+                              }
+                              sx={{
+                                color: "primary.main",
+                                textTransform: "none",
+                                "&:hover": { bgcolor: "primary.lighter" },
+                              }}
+                            >
+                              Edit
+                            </Button>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+        >
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              color="inherit"
+              disabled={deleteProductMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedProductId &&
+                deleteProductMutation.mutate(selectedProductId)
+              }
+              color="error"
+              variant="contained"
+              disabled={deleteProductMutation.isPending}
+            >
+              {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {!isPending && !isError && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 3,
+              px: 2,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Page {page} • Showing {products.length} items
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page === 1}
+                onClick={() => handlePageChange(page - 1)}
+                sx={{
+                  textTransform: "none",
+                  minWidth: 90,
+                }}
+              >
+                Previous
+              </Button>
+              <Typography
+                variant="body2"
+                sx={{ px: 2, color: "text.secondary" }}
+              >
+                Page {page}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={isLastPage}
+                onClick={() => handlePageChange(page + 1)}
+                sx={{
+                  textTransform: "none",
+                  minWidth: 90,
+                }}
+              >
+                Next
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Paper>
   );

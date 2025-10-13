@@ -27,14 +27,19 @@ class AuthService {
     if (!token) return false;
 
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const isExpired = Date.now() >= payload.exp * 1000;
-      if (isExpired) {
-        localStorage.removeItem("token");
-        return false;
-      }
+      const base64Url = token.split(".")[1];
+      if (!base64Url) return false;
 
-      return true;
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(""),
+      );
+      const claims = JSON.parse(jsonPayload);
+
+      return Object.keys(claims).length > 0;
     } catch {
       localStorage.removeItem("token");
       return false;

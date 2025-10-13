@@ -228,7 +228,7 @@ export function Layout() {
         sx={{
           flexGrow: 1,
           minHeight: "100vh",
-          bgcolor: "#e8e8e8",
+          bgcolor: "#f5f5f5",
           transition: "margin-left 0.3s",
         }}
       >
@@ -240,7 +240,7 @@ export function Layout() {
             justifyContent: "space-between",
             px: 4,
             py: 2,
-            bgcolor: "#e8e8e8",
+            bgcolor: "#fafafa",
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: 600 }}>

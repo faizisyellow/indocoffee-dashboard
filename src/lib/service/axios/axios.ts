@@ -2,7 +2,6 @@ import axios, { AxiosError } from "axios";
 
 const clientWithAuth = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 1000,
 });
 
 clientWithAuth.interceptors.request.use((config) => {
@@ -21,7 +20,7 @@ clientWithAuth.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+      localStorage.clear();
 
       window.location.href = "/login";
 

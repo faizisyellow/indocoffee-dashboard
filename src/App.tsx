@@ -10,10 +10,10 @@ import { ProductsList } from "./pages/ProductList";
 import { ProductCreate } from "./pages/ProductCreate";
 import { ProductEdit } from "./pages/ProductEdit";
 import { OrdersList } from "./pages/OrderList";
-import { OrderDetail } from "./pages/OrderDetail";
 import { Navigate } from "react-router";
 import theme from "./theme/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { OrderDetail } from "./pages/OrderDetail";
 
 function App() {
   const queryClient = new QueryClient();
@@ -24,7 +24,14 @@ function App() {
         <CssBaseline />
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={
+                <ProtectedRoute>
+                  <Login />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/"
               element={
