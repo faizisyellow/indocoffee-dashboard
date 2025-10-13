@@ -38,6 +38,7 @@ export function Login() {
   const mutation = useMutation({
     mutationFn: authService.login.bind(authService),
     onSuccess: (data: Login) => {
+      localStorage.clear();
       if (
         data.user.role_name != "admin" &&
         data.user.role_name != "super admin"
@@ -45,7 +46,6 @@ export function Login() {
         setAuthorize(false);
         return;
       }
-
       localStorage.setItem("token", data.token);
       navigate("/");
     },
@@ -67,7 +67,6 @@ export function Login() {
           },
           { abortEarly: false },
         );
-
         mutation.mutate(value as LoginRequest);
       } catch (error) {
         if (error instanceof yup.ValidationError) {
@@ -98,11 +97,11 @@ export function Login() {
     const status = error.response.status;
     const backendError = error.response.data?.error ?? "";
 
-    if (status === 400 || backendError.toLowerCase().includes("validation")) {
+    if (backendError.toLowerCase().includes("validation")) {
       return "Some of your inputs are invalid. Please review the form and try again.";
     }
 
-    if (status === 401 || status === 404) {
+    if (status === 400 || status === 401 || status === 404) {
       return "Invalid email or password. Please try again.";
     }
 
