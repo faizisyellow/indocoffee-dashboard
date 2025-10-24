@@ -36,6 +36,9 @@ export function Beans() {
 
   const queryClient = useQueryClient();
 
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
+
   const beanSchema = yup.object({
     name: yup
       .string()
@@ -102,6 +105,9 @@ export function Beans() {
       queryClient.invalidateQueries({ queryKey: ["beans"] });
       setConfirmAction({ type: null, id: null });
     },
+    onError: () => {
+      setConfirmAction({ type: null, id: null });
+    },
   });
 
   const getErrorMessage = (): string => {
@@ -127,6 +133,8 @@ export function Beans() {
         return "Bean not found.";
       case 409:
         return "A bean with a similar name already exists.";
+      case 429:
+        return "Too many requests. Please slow down and try again later.";
       case 500:
         return "Our server is having trouble right now. Please try again later.";
       default:
@@ -141,7 +149,9 @@ export function Beans() {
     try {
       await beanSchema.validate({ name: newBeanName });
       setCreateError(null);
-      createBeanMutation.mutate({ name: newBeanName });
+      if (isSuperAdmin) {
+        createBeanMutation.mutate({ name: newBeanName });
+      }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
         setCreateError(err.message);
@@ -260,7 +270,7 @@ export function Beans() {
               bgcolor: "#4A90E2",
               "&:hover": { bgcolor: "#357ABD" },
             }}
-            disabled={createBeanMutation.isPending}
+            disabled={createBeanMutation.isPending || !isSuperAdmin}
           >
             {createBeanMutation.isPending ? (
               <CircularProgress size={20} color="inherit" />
@@ -306,7 +316,7 @@ export function Beans() {
                         onClick={handleSaveEdit}
                         variant="contained"
                         size="small"
-                        disabled={editBeanMutation.isPending}
+                        disabled={editBeanMutation.isPending || !isSuperAdmin}
                       >
                         {editBeanMutation.isPending ? (
                           <CircularProgress size={18} color="inherit" />
@@ -333,7 +343,7 @@ export function Beans() {
                       <Button
                         onClick={() => handleDelete(bean.id)}
                         sx={{ color: "text.secondary" }}
-                        disabled={deleteBeanMutation.isPending}
+                        disabled={deleteBeanMutation.isPending || !isSuperAdmin}
                       >
                         {deleteBeanMutation.isPending &&
                         confirmAction.id === bean.id ? (
@@ -377,7 +387,9 @@ export function Beans() {
             color="primary"
             variant="contained"
             disabled={
-              editBeanMutation.isPending || deleteBeanMutation.isPending
+              editBeanMutation.isPending ||
+              deleteBeanMutation.isPending ||
+              !isSuperAdmin
             }
           >
             {editBeanMutation.isPending || deleteBeanMutation.isPending ? (

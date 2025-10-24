@@ -34,6 +34,9 @@ export function Forms() {
     id: number | null;
   }>({ type: null, id: null });
 
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
+
   const queryClient = useQueryClient();
 
   const formSchema = yup.object({
@@ -102,6 +105,9 @@ export function Forms() {
       queryClient.invalidateQueries({ queryKey: ["forms"] });
       setConfirmAction({ type: null, id: null });
     },
+    onError: () => {
+      setConfirmAction({ type: null, id: null });
+    },
   });
 
   const getErrorMessage = (): string => {
@@ -127,6 +133,8 @@ export function Forms() {
         return "Form not found.";
       case 409:
         return "A form with a similar name already exists.";
+      case 429:
+        return "Too many requests. Please slow down and try again later.";
       case 500:
         return "Our server is having trouble right now. Please try again later.";
       default:
@@ -141,7 +149,9 @@ export function Forms() {
     try {
       await formSchema.validate({ name: newFormName });
       setCreateError(null);
-      createFormMutation.mutate({ name: newFormName });
+      if (isSuperAdmin) {
+        createFormMutation.mutate({ name: newFormName });
+      }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
         setCreateError(err.message);
@@ -260,7 +270,7 @@ export function Forms() {
               bgcolor: "#4A90E2",
               "&:hover": { bgcolor: "#357ABD" },
             }}
-            disabled={createFormMutation.isPending}
+            disabled={createFormMutation.isPending || !isSuperAdmin}
           >
             {createFormMutation.isPending ? (
               <CircularProgress size={20} color="inherit" />
@@ -306,7 +316,7 @@ export function Forms() {
                         onClick={handleSaveEdit}
                         variant="contained"
                         size="small"
-                        disabled={editFormMutation.isPending}
+                        disabled={editFormMutation.isPending || !isSuperAdmin}
                       >
                         {editFormMutation.isPending ? (
                           <CircularProgress size={18} color="inherit" />
@@ -333,7 +343,7 @@ export function Forms() {
                       <Button
                         onClick={() => handleDelete(form.id)}
                         sx={{ color: "text.secondary" }}
-                        disabled={deleteFormMutation.isPending}
+                        disabled={deleteFormMutation.isPending || !isSuperAdmin}
                       >
                         {deleteFormMutation.isPending &&
                         confirmAction.id === form.id ? (
@@ -377,7 +387,9 @@ export function Forms() {
             color="primary"
             variant="contained"
             disabled={
-              editFormMutation.isPending || deleteFormMutation.isPending
+              editFormMutation.isPending ||
+              deleteFormMutation.isPending ||
+              !isSuperAdmin
             }
           >
             {editFormMutation.isPending || deleteFormMutation.isPending ? (
