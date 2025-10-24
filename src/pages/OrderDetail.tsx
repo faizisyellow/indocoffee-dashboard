@@ -59,6 +59,8 @@ export function OrderDetail() {
     nextStatus?: OrderStatus;
   }>({ open: false });
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
 
   const {
     data: order,
@@ -232,7 +234,8 @@ export function OrderDetail() {
                 disabled={
                   order.status === "cancelled" ||
                   order.status === "complete" ||
-                  resultUpdateOrderStatus.isPending
+                  resultUpdateOrderStatus.isPending ||
+                  !isSuperAdmin
                 }
                 sx={{
                   bgcolor:
