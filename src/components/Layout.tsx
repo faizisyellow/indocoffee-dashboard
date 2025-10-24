@@ -19,6 +19,7 @@ import { authService } from "../lib/service/auth";
 import { useQuery } from "@tanstack/react-query";
 import { profileService } from "../lib/service/profile";
 import { green } from "@mui/material/colors";
+import { DemoBanner } from "./DemoBanner";
 
 const drawerWidth = 240;
 
@@ -232,6 +233,8 @@ export function Layout() {
           transition: "margin-left 0.3s",
         }}
       >
+        <DemoBanner />
+
         {/* Top bar */}
         <Box
           sx={{
