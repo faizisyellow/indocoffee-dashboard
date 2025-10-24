@@ -57,6 +57,9 @@ export function ProductCreate() {
   const [openDialog, setOpenDialog] = useState(false);
   const [data, setData] = useState<ProductFormData | null>(null);
 
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
+
   const resultGetBeans = useQuery({
     queryKey: ["beans"],
     queryFn: inventoryService.GetBeans.bind(inventoryService),
@@ -179,6 +182,10 @@ export function ProductCreate() {
   };
 
   const handleDialogConfirm = () => {
+    if (!isSuperAdmin) {
+      return;
+    }
+
     if (data) {
       const formData = new FormData();
 
@@ -514,7 +521,7 @@ export function ProductCreate() {
             onClick={handleDialogConfirm}
             variant="contained"
             autoFocus
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || !isSuperAdmin}
             sx={{
               bgcolor: "#4A90E2",
               "&:hover": { bgcolor: "#357ABD" },

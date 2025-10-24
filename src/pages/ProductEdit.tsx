@@ -52,6 +52,9 @@ export function ProductEdit() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
+
   const resultGetProduct = useQuery({
     queryKey: ["products", id],
     queryFn: () => inventoryService.GetProduct(Number(id)),
@@ -212,6 +215,9 @@ export function ProductEdit() {
 
   const handleConfirmSubmit = () => {
     setConfirmDialogOpen(false);
+    if (!isSuperAdmin) {
+      return;
+    }
     form.handleSubmit();
   };
 
@@ -560,6 +566,7 @@ export function ProductEdit() {
             color="primary"
             sx={{ textTransform: "none" }}
             autoFocus
+            disabled={!isSuperAdmin}
           >
             Confirm
           </Button>

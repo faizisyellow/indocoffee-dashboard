@@ -47,6 +47,7 @@ export function Login() {
         return;
       }
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role_name);
       navigate("/");
     },
   });

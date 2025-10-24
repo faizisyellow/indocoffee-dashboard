@@ -47,6 +47,9 @@ export function ProductsList() {
     null,
   );
 
+  const userRole = localStorage.getItem("role");
+  const isSuperAdmin = userRole === "super admin";
+
   const {
     isPending,
     isError,
@@ -91,6 +94,9 @@ export function ProductsList() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setDeleteDialogOpen(false);
       setSelectedProductId(null);
+    },
+    onError: () => {
+      setDeleteDialogOpen(false);
     },
   });
 
@@ -146,6 +152,8 @@ export function ProductsList() {
     switch (status) {
       case 400:
         return "Invalid request. Try again.";
+      case 429:
+        return "Too many requests. Please slow down and try again later.";
       case 500:
         return "Our server is having trouble right now. Please try again later.";
       default:
@@ -535,13 +543,21 @@ export function ProductsList() {
               Cancel
             </Button>
             <Button
-              onClick={() =>
-                selectedProductId &&
-                deleteProductMutation.mutate(selectedProductId)
+              onClick={() => {
+                if (!isSuperAdmin) {
+                  return;
+                }
+                if (selectedProductId) {
+                  deleteProductMutation.mutate(selectedProductId);
+                }
+              }}
+              disabled={
+                !isSuperAdmin ||
+                !selectedProductId ||
+                deleteProductMutation.isPending
               }
               color="error"
               variant="contained"
-              disabled={deleteProductMutation.isPending}
             >
               {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
